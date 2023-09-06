@@ -1,0 +1,1 @@
+This project is a bot created for our friend group. Its purpose is to share private jokes and provide specific information about the games we've played together.
