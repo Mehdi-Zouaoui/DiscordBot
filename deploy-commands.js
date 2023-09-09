@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const token = process.env.DISCORD_TOKEN;
 const clientID = process.env.APP_ID;
-const guildID = process.env.BROTHERS_SERVER_ID;
+const guildID = process.env.SERVEUR_ID;
 
 
 const commands = [];

@@ -15,26 +15,69 @@ const options = {
 };
 
 const getLeagueDetails = async (user) => {
-  console.log("test fetching league data");
   try {
     const leagueDetails = await fetch(apiUrl + user, options);
     const leagueDetailsJSON = await leagueDetails.json();
-    const playerDetails = await getTest(leagueDetailsJSON.id);
-    return playerDetails;
+    console.log(leagueDetailsJSON);
+    const playerDetails = await getRankDetails(leagueDetailsJSON.id);
+    const playerHistory = await getMatchHistory(leagueDetailsJSON.puuid);
+
+    return {
+      playerDetails,
+      playerHistory,
+    };
   } catch (error) {
     console.error("Error:", error);
   }
   //   return user;
 };
 
-const getTest = async (summonerId) => {
+const getMatchHistory = async (puuid) => {
+  const historyArray = [];
   try {
-    const test = await fetch(
+    const matchHistory = await fetch(
+      `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=10`,
+      options
+    );
+    const matchHistoryJSON = await matchHistory.json();
+    for (let i = 0; i < matchHistoryJSON.length; i++) {
+      const matchResult = await getMatchDetails(matchHistoryJSON[i]);
+      const participantId = matchResult.info.participants.findIndex(
+        (participant) => participant.puuid === puuid
+      );
+      if (participantId !== -1) {
+        historyArray.push(matchResult.info.participants[participantId].win);
+      }
+    }
+    return historyArray;
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
+const getMatchDetails = async (match) => {
+  console.log(match);
+  try {
+    const matchDetails = await fetch(
+      `https://europe.api.riotgames.com/lol/match/v5/matches/${match}`,
+      options
+    );
+    const matchDetailsJSON = await matchDetails.json();
+    return matchDetailsJSON;
+  } catch (e) {
+    console.error("Error:", e);
+  }
+};
+
+const getRankDetails = async (summonerId) => {
+  try {
+    const rankDetails = await fetch(
       `https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`,
       options
     );
-    const dataJSON = await test.json();
-    return dataJSON;
+    const rankDetailsJSON = await rankDetails.json();
+    console.log(rankDetailsJSON);
+    return rankDetailsJSON;
   } catch (e) {
     console.error(e);
   }
@@ -91,19 +134,23 @@ module.exports = {
     collector.on("collect", async (i) => {
       const selection = i.values[0];
       const currentPlayerDetails = await getLeagueDetails(selection);
-      const details = currentPlayerDetails[0];
-      console.log(details);
-      if (details != null) {
+      const player = currentPlayerDetails.playerDetails[0];
+      const history = currentPlayerDetails.playerHistory;
+      const historyDisplay = history.map((result) =>
+        result === true ? "❌ " : "🟢 "
+      );
+      console.log(historyDisplay);
+      if (player != null) {
         await i.reply(
           `${i.user} a choisi ${selection}!\n\nInvocateur : ${
-            details.summonerName
-          } \nRank: ${details.tier} ${details.rank} \nLP: ${
-            details.leaguePoints
-          } \nWins: ${details.wins} \nLosses ${
-            details.losses
+            player.summonerName
+          } \nRank: ${player.tier} ${player.rank} \nLP: ${
+            player.leaguePoints
+          } \nWins: ${player.wins} \nLosses ${
+            player.losses
           } \nWinrate: ${Math.round(
-            (100 * details.wins) / (details.wins + details.losses)
-          )}%`
+            (100 * player.wins) / (player.wins + player.losses)
+          )}%\nHistory:${historyDisplay.join(" ")}`
         );
       } else await i.reply("Il joue plus ou en tout cas plus en ranked.");
     });
