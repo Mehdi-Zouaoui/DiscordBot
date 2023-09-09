@@ -18,7 +18,6 @@ const getLeagueDetails = async (user) => {
   try {
     const leagueDetails = await fetch(apiUrl + user, options);
     const leagueDetailsJSON = await leagueDetails.json();
-    console.log(leagueDetailsJSON);
     const playerDetails = await getRankDetails(leagueDetailsJSON.id);
     const playerHistory = await getMatchHistory(leagueDetailsJSON.puuid);
 
@@ -56,7 +55,6 @@ const getMatchHistory = async (puuid) => {
 };
 
 const getMatchDetails = async (match) => {
-  console.log(match);
   try {
     const matchDetails = await fetch(
       `https://europe.api.riotgames.com/lol/match/v5/matches/${match}`,
@@ -76,7 +74,6 @@ const getRankDetails = async (summonerId) => {
       options
     );
     const rankDetailsJSON = await rankDetails.json();
-    console.log(rankDetailsJSON);
     return rankDetailsJSON;
   } catch (e) {
     console.error(e);
@@ -139,7 +136,7 @@ module.exports = {
       const historyDisplay = history.map((result) =>
         result === true ? "❌ " : "🟢 "
       );
-      console.log(historyDisplay);
+
       if (player != null) {
         await i.reply(
           `${i.user} a choisi ${selection}!\n\nInvocateur : ${
